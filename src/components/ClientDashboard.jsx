@@ -881,17 +881,19 @@ const ClientDashboard = ({ user, onLogout }) => {
                     return (
                       <div key={start.id} className="glass" style={{ padding: '12px 16px', borderRadius: 'var(--radius-sm)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-                          <span style={{ color: 'var(--accent-gold)', fontWeight: 700, fontSize: '0.85rem' }}>
-                            Day {i + 1}
-                          </span>
-                          {end?.paid_at && (
-                            <span style={{
-                              fontSize: '0.72rem', fontWeight: 700,
-                              color: 'var(--danger)',
-                              background: 'rgba(255,75,43,0.1)',
-                              padding: '2px 8px', borderRadius: 99,
-                            }}>✓ Paid</span>
-                          )}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ color: 'var(--accent-gold)', fontWeight: 700, fontSize: '0.85rem' }}>
+                              Day {i + 1}
+                            </span>
+                            {end?.paid_at && (
+                              <span style={{
+                                fontSize: '0.72rem', fontWeight: 700,
+                                color: 'var(--danger)',
+                                background: 'rgba(255,75,43,0.1)',
+                                padding: '2px 8px', borderRadius: 99,
+                              }}>✓ Paid</span>
+                            )}
+                          </div>
                           <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
                             {new Date(start.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                           </span>
