@@ -17,23 +17,16 @@ const PilotDashboard = ({ user, onLogout }) => {
   const [logs, setLogs] = useState([]);
   const [showNewForm, setShowNewForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [continuing, setContinuing] = useState(false);
   const [notification, setNotification] = useState(null);
   const [timerDisplay, setTimerDisplay] = useState('00:00:00');
   const [confirm, setConfirm] = useState(null);
   const [showStopForm, setShowStopForm] = useState(false);
   const [sessionSummary, setSessionSummary] = useState(null);
-  const [showContinueForm, setShowContinueForm] = useState(false);
   const [paymentForm, setPaymentForm] = useState({
     price: '', gcashNumber: '', paypalEmail: '', pilotName: '', hourlyRate: '', currency: 'PHP'
   });
   const [editingPayment, setEditingPayment] = useState(false);
   const [unpaidSecs, setUnpaidSecs] = useState(0);
-  const [continueForm, setContinueForm] = useState({
-    startLevel: '',
-    startExpPercent: '',
-    targetLevel: '',
-  });
   const stopImageUrlRef = useRef(null);
   const timerRef = useRef(null);
 
@@ -200,14 +193,18 @@ const PilotDashboard = ({ user, onLogout }) => {
     const sortedLogs = [...logs].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     const latestStart = sortedLogs.find(l => l.log_type === 'start');
     const latestEnd = sortedLogs.find(l => l.log_type === 'end');
+    const isCompleted = selectedSession.status === 'completed';
     const needsStartLog = !latestStart ||
-      (latestEnd && new Date(latestStart.created_at) < new Date(latestEnd.created_at));
+      (latestEnd && new Date(latestStart.created_at) < new Date(latestEnd.created_at)) ||
+      isCompleted;
 
     if (needsStartLog) {
-      const lv = parseInt(updateForm.level) || selectedSession.start_level;
+      // Use latest update/end data as starting point for the new day
+      const latestLog = sortedLogs.find(l => l.log_type === 'update' || l.log_type === 'end');
+      const lv = parseInt(updateForm.level) || latestLog?.level || selectedSession.start_level;
       const exp = updateForm.expPercent !== ''
         ? parseFloat(updateForm.expPercent) || 0
-        : 0;
+        : (latestLog ? parseFloat(latestLog.exp_percent) || 0 : 0);
 
       await supabase.from('progress_logs').insert({
         session_id: selectedSessionId,
@@ -218,12 +215,20 @@ const PilotDashboard = ({ user, onLogout }) => {
       });
     }
 
-    await updateSession(selectedSessionId, {
+    // If session was completed, reset it to active with fresh timer
+    const sessionUpdates = {
       timer_status: 'running',
       timer_started_at: new Date().toISOString(),
-    });
+    };
+    if (isCompleted) {
+      sessionUpdates.status = 'active';
+      sessionUpdates.total_active_seconds = 0;
+    }
 
-    loadLogs(selectedSessionId);
+    await updateSession(selectedSessionId, sessionUpdates);
+
+    await loadLogs(selectedSessionId);
+    await loadSessions();
     showNotif('Timer started!');
   };
 
@@ -395,14 +400,7 @@ const PilotDashboard = ({ user, onLogout }) => {
     setShowStopForm(true);
   };
 
-  const openContinueForm = () => {
-    setContinueForm({
-      startLevel: latestUpdate?.level || selectedSession.start_level,
-      startExpPercent: latestUpdate?.exp_percent || 0,
-      targetLevel: selectedSession.target_level,
-    });
-    setShowContinueForm(true);
-  };
+
 
   const savePaymentSettings = async () => {
     await updateSession(selectedSessionId, {
@@ -480,35 +478,7 @@ const PilotDashboard = ({ user, onLogout }) => {
     showNotif('Payment request cancelled.');
   };
 
-  const handleContinueSession = async (e) => {
-    e.preventDefault();
-    if (continuing) return;
-    setContinuing(true);
-    const lv = parseInt(continueForm.startLevel);
-    const exp = parseFloat(continueForm.startExpPercent);
-    const target = parseInt(continueForm.targetLevel);
 
-    await updateSession(selectedSessionId, {
-      status: 'active',
-      timer_status: 'stopped',
-      timer_started_at: null,
-      total_active_seconds: 0,
-      total_billed_seconds: selectedSession.total_billed_seconds || 0,
-      target_level: target,
-      start_level: lv,
-      payment_status: 'unpaid',
-      payment_requested: false,
-      payment_reference: null,
-      payment_method: null,
-    });
-
-    setTimerDisplay('00:00:00');
-    setContinuing(false);
-    setShowContinueForm(false);
-    await loadLogs(selectedSessionId);
-    await loadSessions();
-    showNotif('Ready! Click Start Session to begin working.');
-  };
 
   const calcExpGained = () => {
     if (!startLog || !latestUpdate) return null;
@@ -628,45 +598,7 @@ const PilotDashboard = ({ user, onLogout }) => {
         </div>
       )}
 
-      {showContinueForm && (
-        <div className="dialog-overlay" onClick={() => setShowContinueForm(false)}>
-          <div className="dialog glass" onClick={(e) => e.stopPropagation()}>
-            <Play size={24} style={{ color: 'var(--accent-teal)', marginBottom: 12 }} />
-            <h3>Continue Session</h3>
-            <p style={{ color: 'var(--text-muted)', marginBottom: 16, fontSize: '0.9rem' }}>
-              Day {currentDay + 1} — update starting stats.
-            </p>
-            <form onSubmit={handleContinueSession} style={{ width: '100%' }}>
-              <div className="form-row" style={{ marginBottom: 12 }}>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label>Start Level</label>
-                  <input className="input-field" type="number" min={1} max={200}
-                    value={continueForm.startLevel}
-                    onChange={(e) => setContinueForm((f) => ({ ...f, startLevel: e.target.value }))}
-                    required />
-                </div>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label>Start EXP %</label>
-                  <input className="input-field" type="number" min={0} max={100} step={0.0001}
-                    value={continueForm.startExpPercent}
-                    onChange={(e) => setContinueForm((f) => ({ ...f, startExpPercent: e.target.value }))} />
-                </div>
-              </div>
-              <div className="form-group" style={{ marginBottom: 16 }}>
-                <label>Target Level</label>
-                <input className="input-field" type="number" min={1} max={200}
-                  value={continueForm.targetLevel}
-                  onChange={(e) => setContinueForm((f) => ({ ...f, targetLevel: e.target.value }))}
-                  required />
-              </div>
-              <div className="dialog-actions">
-                <button type="button" className="btn-secondary" onClick={() => setShowContinueForm(false)}>Cancel</button>
-                <button type="submit" className="btn-primary" disabled={continuing}>{continuing ? 'Starting...' : `Start Day ${currentDay + 1}`}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+
 
       {showStopForm && (
         <div className="dialog-overlay" onClick={() => setShowStopForm(false)}>
@@ -1037,15 +969,9 @@ const PilotDashboard = ({ user, onLogout }) => {
               {selectedSession.timer_status !== 'running' && selectedSession.timer_status !== 'paused' && (
                 <div className="timer-controls glass card" style={{ marginBottom: 24 }}>
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center' }}>
-                    {selectedSession.timer_status === 'stopped' && selectedSession.status === 'completed' ? (
-                      <button className="btn-primary timer-btn start" onClick={openContinueForm}>
-                        <Play size={16} /> Continue Session (Day {currentDay + 1})
-                      </button>
-                    ) : selectedSession.timer_status === 'stopped' ? (
-                      <button className="btn-primary timer-btn start" onClick={handleStart}>
-                        <Play size={16} /> Start Session
-                      </button>
-                    ) : null}
+                    <button className="btn-primary timer-btn start" onClick={handleStart}>
+                      <Play size={16} /> Start Session {currentDay > 0 ? `(Day ${currentDay + 1})` : ''}
+                    </button>
                   </div>
                 </div>
               )}

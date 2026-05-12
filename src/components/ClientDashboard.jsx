@@ -970,19 +970,27 @@ const ClientDashboard = ({ user, onLogout }) => {
                                 {new Date(start.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                               </span>
                             </span>
-                            {end ? (
+                            {effectiveEnd ? (
                               <>
                                 <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
                                   🕐 Time Out: <span style={{ color: 'var(--text-muted)' }}>
-                                    {new Date(end.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} — {new Date(end.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                    {new Date(effectiveEnd.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} — {new Date(effectiveEnd.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                                   </span>
                                 </span>
                                 <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
                                   ⏱ Total: <span style={{ color: 'var(--accent-gold)' }}>
                                     {(() => {
-                                      if (end.billed_seconds && end.billed_seconds > 0) {
+                                      // Use billed_seconds from end log if available
+                                      if (end?.billed_seconds && end.billed_seconds > 0) {
                                         const h = Math.floor(end.billed_seconds / 3600);
                                         const m = Math.floor((end.billed_seconds % 3600) / 60);
+                                        return `${h}h ${m}m`;
+                                      }
+                                      // Fallback: calculate from timestamps
+                                      const diffSecs = Math.floor((new Date(effectiveEnd.created_at) - new Date(start.created_at)) / 1000);
+                                      if (diffSecs > 0) {
+                                        const h = Math.floor(diffSecs / 3600);
+                                        const m = Math.floor((diffSecs % 3600) / 60);
                                         return `${h}h ${m}m`;
                                       }
                                       return '—';
@@ -990,8 +998,6 @@ const ClientDashboard = ({ user, onLogout }) => {
                                   </span>
                                 </span>
                               </>
-                            ) : isDayCompleted ? (
-                              <span style={{ fontSize: '0.8rem', color: 'var(--success)', fontWeight: 600 }}>✓ Session completed</span>
                             ) : (
                               <span style={{ fontSize: '0.8rem', color: 'var(--accent-teal)', fontWeight: 600 }}>● Currently active</span>
                             )}
