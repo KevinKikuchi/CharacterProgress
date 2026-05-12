@@ -598,7 +598,7 @@ const ClientDashboard = ({ user, onLogout }) => {
                           </span>
                         </div>
                         <div className="quick-stat">
-                          <span className="label">Hours Today</span>
+                          <span className="label">Hours Worked</span>
                           <span className="value" style={{ color: 'var(--accent-purple)' }}>{hrsToday.toFixed(2)} hrs</span>
                         </div>
                         <div style={{ borderTop: '1px solid var(--glass-border)', marginTop: 8, paddingTop: 8 }}>
