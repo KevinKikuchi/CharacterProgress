@@ -1003,9 +1003,7 @@ const PilotDashboard = ({ user, onLogout }) => {
 
                 <div style={{ marginTop: 16 }}>
                   <LinearProgressBar
-                    value={latestUpdate ? progressToTarget(
-                      latestUpdate.level, parseFloat(latestUpdate.exp_percent), selectedSession.target_level
-                    ).overallPercent : 0}
+                    value={latestUpdate ? Math.min(100, ((latestUpdate.level + parseFloat(latestUpdate.exp_percent) / 100) / selectedSession.target_level) * 100) : 0}
                     height={8}
                     showPercent={false}
                     label="Overall progress"

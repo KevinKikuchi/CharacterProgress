@@ -27,11 +27,16 @@ const ClientDashboard = ({ user, onLogout }) => {
   const [paymentMethod, setPaymentMethod] = useState('gcash');
   const [submittingPayment, setSubmittingPayment] = useState(false);
   const [paymentHistory, setPaymentHistory] = useState([]);
+  const [selectedLogs, setSelectedLogs] = useState([]);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
 
   const activeSession = sessions.find((s) => s.id === activeSessionId) || sessions[0];
   const startLog = [...logs]
     .filter((l) => l.log_type === 'start')
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+  const initialStartLog = [...logs]
+    .filter((l) => l.log_type === 'start')
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))[0];
   const endLog = logs.find((l) => l.log_type === 'end');
   const updateLogs = logs
     .filter((l) => (l.log_type === 'update' || l.log_type === 'end') &&
@@ -179,12 +184,47 @@ const ClientDashboard = ({ user, onLogout }) => {
 
     setSubmittingPayment(false);
   };
+  
+  const handleDeleteSelected = async () => {
+    if (selectedLogs.length === 0 || !activeSession) return;
+    if (!window.confirm(`Are you sure you want to delete ${selectedLogs.length} selected screenshot logs? This will also remove them from the session timeline.`)) return;
+
+    const { error } = await supabase
+      .from('progress_logs')
+      .delete()
+      .in('id', selectedLogs);
+
+    if (!error) {
+      setSelectedLogs([]);
+      setIsSelectionMode(false);
+      loadLogs(activeSession.id);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (!activeSession) return;
+    const galleryLogs = logs.filter(l => l.image_url);
+    if (galleryLogs.length === 0) return;
+    if (!window.confirm(`Are you sure you want to delete ALL ${galleryLogs.length} screenshots? This will remove the logs from the timeline as well.`)) return;
+
+    const ids = galleryLogs.map(l => l.id);
+    const { error } = await supabase
+      .from('progress_logs')
+      .delete()
+      .in('id', ids);
+
+    if (!error) {
+      setSelectedLogs([]);
+      setIsSelectionMode(false);
+      loadLogs(activeSession.id);
+    }
+  };
 
   const todayStartLevel = startLog?.level ?? activeSession?.start_level ?? 1;
   const todayStartExp = startLog ? parseFloat(startLog.exp_percent) : 0;
 
   const progress = activeSession
-    ? progressToTarget(displayLevel, animatedExp, activeSession.target_level, todayStartLevel, todayStartExp)
+    ? { overallPercent: Math.min(100, ((displayLevel + animatedExp / 100) / activeSession.target_level) * 100) }
     : null;
 
   const todayGain = () => {
@@ -363,14 +403,6 @@ const ClientDashboard = ({ user, onLogout }) => {
                   {timerActive ? 'Active' : activeSession.timer_status === 'paused' ? 'Paused' : activeSession.status === 'completed' ? 'Completed' : 'Total Time'}
                 </div>
               </div>
-              {expPerHour !== null && (
-                <div className="glass stat-card">
-                  <div className="stat-value" style={{ color: 'var(--accent-purple)' }}>
-                    {expPerHour.toFixed(2)}%
-                  </div>
-                  <div className="stat-label">EXP / Hour</div>
-                </div>
-              )}
             </div>
           </motion.div>
 
@@ -832,10 +864,33 @@ const ClientDashboard = ({ user, onLogout }) => {
           <motion.div className="glass card" style={{ marginTop: 24 }}
             initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
           >
-            <h2>
-              <ImageIcon size={18} style={{ verticalAlign: 'middle', marginRight: 8, color: 'var(--accent-gold)' }} />
-              Proof Gallery
-            </h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h2 style={{ margin: 0 }}>
+                <ImageIcon size={18} style={{ verticalAlign: 'middle', marginRight: 8, color: 'var(--accent-gold)' }} />
+                Proof Gallery
+              </h2>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {isSelectionMode ? (
+                  <>
+                    <button className="btn-danger" onClick={handleDeleteSelected} disabled={selectedLogs.length === 0} style={{ padding: '4px 12px', fontSize: '0.8rem' }}>
+                      Delete Selected ({selectedLogs.length})
+                    </button>
+                    <button className="btn-secondary" onClick={() => { setIsSelectionMode(false); setSelectedLogs([]); }} style={{ padding: '4px 12px', fontSize: '0.8rem' }}>
+                      Cancel
+                    </button>
+                  </>
+                ) : logs.filter(l => l.image_url).length > 0 && (
+                  <>
+                    <button className="btn-secondary" onClick={() => setIsSelectionMode(true)} style={{ padding: '4px 12px', fontSize: '0.8rem' }}>
+                      Select
+                    </button>
+                    <button className="btn-danger" onClick={handleDeleteAll} style={{ padding: '4px 12px', fontSize: '0.8rem', opacity: 0.7 }}>
+                      Delete All
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
             {logs.filter((l) => l.image_url).length === 0 && (
               <div className="empty-state" style={{ padding: '1rem 0' }}>
                 <ImageIcon size={32} style={{ opacity: 0.2, marginBottom: 8 }} />
@@ -844,9 +899,30 @@ const ClientDashboard = ({ user, onLogout }) => {
             )}
             <div className="proof-gallery">
               {[...logs].reverse().filter((l) => l.image_url).map((log) => (
-                <div key={log.id} className="proof-item">
-                  <img src={log.image_url} alt={`Lv.${log.level}`}
-                    onClick={() => setLightboxImg(log.image_url)} />
+                <div key={log.id} 
+                  className={`proof-item ${selectedLogs.includes(log.id) ? 'selected' : ''}`}
+                  onClick={() => {
+                    if (isSelectionMode) {
+                      setSelectedLogs(prev => prev.includes(log.id) ? prev.filter(id => id !== log.id) : [...prev, log.id]);
+                    } else {
+                      setLightboxImg(log.image_url);
+                    }
+                  }}
+                  style={{ position: 'relative', cursor: 'pointer' }}
+                >
+                  {isSelectionMode && (
+                    <div style={{ 
+                      position: 'absolute', top: 8, left: 8, zIndex: 10,
+                      background: selectedLogs.includes(log.id) ? 'var(--accent-teal)' : 'rgba(0,0,0,0.5)',
+                      width: 20, height: 20, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      border: '1px solid rgba(255,255,255,0.2)'
+                    }}>
+                      {selectedLogs.includes(log.id) && <span style={{ color: 'white', fontSize: '12px' }}>✓</span>}
+                    </div>
+                  )}
+                  <img src={log.image_url} alt={`Lv.${log.level}`} 
+                    style={{ opacity: isSelectionMode && !selectedLogs.includes(log.id) ? 0.7 : 1 }}
+                  />
                   <div className="proof-meta">
                     <strong>Lv.{log.level}</strong> @ {parseFloat(log.exp_percent).toFixed(2)}%
                     <span className="proof-date">
@@ -1033,6 +1109,13 @@ const ClientDashboard = ({ user, onLogout }) => {
         }
         .level-up-flash {
           animation: levelUpFlash 2s ease-in-out;
+        }
+        .proof-item.selected {
+          outline: 2px solid var(--accent-teal);
+          outline-offset: -2px;
+        }
+        .proof-item.selected img {
+          opacity: 0.8;
         }
       `}</style>
     </div>
