@@ -26,11 +26,13 @@ CREATE TABLE progress_logs (
     notes TEXT,
     log_type TEXT DEFAULT 'update', -- 'start', 'update', 'end'
     billed_seconds INTEGER DEFAULT 0,
+    paid_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Migration: add billed_seconds column to progress_logs
 ALTER TABLE progress_logs ADD COLUMN IF NOT EXISTS billed_seconds INTEGER DEFAULT 0;
+ALTER TABLE progress_logs ADD COLUMN IF NOT EXISTS paid_at TIMESTAMP WITH TIME ZONE;
 
 -- Enable RLS
 ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;

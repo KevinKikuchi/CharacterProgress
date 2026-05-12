@@ -27,6 +27,7 @@ const PilotDashboard = ({ user, onLogout }) => {
     price: '', gcashNumber: '', paypalEmail: '', pilotName: '', hourlyRate: '', currency: 'PHP'
   });
   const [editingPayment, setEditingPayment] = useState(false);
+  const [unpaidSecs, setUnpaidSecs] = useState(0);
   const [continueForm, setContinueForm] = useState({
     startLevel: '',
     startExpPercent: '',
@@ -120,6 +121,19 @@ const PilotDashboard = ({ user, onLogout }) => {
     }
   };
 
+  const loadUnpaidHours = async (sessionId) => {
+    const { data } = await supabase
+      .from('progress_logs')
+      .select('billed_seconds')
+      .eq('session_id', sessionId)
+      .eq('log_type', 'end')
+      .is('paid_at', null);
+    if (data) {
+      const total = data.reduce((sum, l) => sum + (l.billed_seconds || 0), 0);
+      setUnpaidSecs(total);
+    }
+  };
+
   useEffect(() => {
     loadSessions();
   }, []);
@@ -127,6 +141,7 @@ const PilotDashboard = ({ user, onLogout }) => {
   useEffect(() => {
     if (selectedSessionId) {
       loadLogs(selectedSessionId);
+      loadUnpaidHours(selectedSessionId);
       setUpdateForm({ level: '', expPercent: '', notes: '' });
     }
   }, [selectedSessionId]);
@@ -391,10 +406,7 @@ const PilotDashboard = ({ user, onLogout }) => {
   };
 
   const confirmPayment = async () => {
-    const totalSecs =
-      selectedSession.total_billed_seconds ||
-      selectedSession.total_active_seconds ||
-      0;
+    const totalSecs = selectedSession.total_billed_seconds || 0;
     const hrs = totalSecs / 3600;
     const rate = selectedSession.hourly_rate || 0;
     const amount = hrs * rate;
@@ -411,9 +423,18 @@ const PilotDashboard = ({ user, onLogout }) => {
     });
 
     if (error) {
-      showNotif('Failed to confirm payment: ' + error.message, 'error');
+      showNotif('Failed: ' + error.message, 'error');
       return;
     }
+
+    await supabase
+      .from('progress_logs')
+      .update({ paid_at: new Date().toISOString() })
+      .eq('session_id', selectedSessionId)
+      .eq('log_type', 'end')
+      .is('paid_at', null);
+
+    setUnpaidSecs(0);
 
     await updateSession(selectedSessionId, {
       payment_status: 'unpaid',
@@ -886,16 +907,24 @@ const PilotDashboard = ({ user, onLogout }) => {
 
                   <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: 8, marginTop: 4 }}>
                     {(() => {
-                      const totalSecs = selectedSession.total_active_seconds || 0;
-                      const hrsToday = totalSecs / 3600;
+                      const isCompleted = selectedSession.status === 'completed';
+                      const activeSecs = selectedSession.total_active_seconds || 0;
+                      const runningSecs = selectedSession.timer_status === 'running' && selectedSession.timer_started_at
+                        ? Math.floor((Date.now() - new Date(selectedSession.timer_started_at).getTime()) / 1000)
+                        : 0;
+                      const totalSecs = isCompleted
+                        ? unpaidSecs
+                        : (activeSecs + runningSecs);
+                      const h = Math.floor(totalSecs / 3600);
+                      const m = Math.floor((totalSecs % 3600) / 60);
                       const rate = selectedSession.hourly_rate || 0;
-                      const amountDue = hrsToday * rate;
+                      const amountDue = (totalSecs / 3600) * rate;
                       return (
                         <>
                           <div className="quick-stat">
                             <span className="label">Hours Worked</span>
                             <span className="value" style={{ color: 'var(--accent-purple)' }}>
-                              {(() => { const h = Math.floor(totalSecs / 3600); const m = Math.floor((totalSecs % 3600) / 60); return `${h}h ${m}m`; })()}
+                              {h}h {m}m
                             </span>
                           </div>
                           <div className="quick-stat">

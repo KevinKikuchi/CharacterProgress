@@ -611,7 +611,7 @@ const ClientDashboard = ({ user, onLogout }) => {
                             </span>
                           </div>
                           <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', textAlign: 'right', marginTop: 2 }}>
-                            {getCurrencySymbol(activeSession?.currency)}{rate.toFixed(2)} × {(() => { const h = Math.floor(totalSecs / 3600); const m = Math.floor((totalSecs % 3600) / 60); return `${h}h ${m}m`; })()}
+                            {getCurrencySymbol(activeSession?.currency)}{rate.toFixed(2)} × {hrsToday.toFixed(2)} hrs
                           </div>
                         </div>
                       </div>
@@ -887,6 +887,14 @@ const ClientDashboard = ({ user, onLogout }) => {
                           <span style={{ color: 'var(--accent-gold)', fontWeight: 700, fontSize: '0.85rem' }}>
                             Day {i + 1}
                           </span>
+                          {end?.paid_at && (
+                            <span style={{
+                              fontSize: '0.72rem', fontWeight: 700,
+                              color: 'var(--danger)',
+                              background: 'rgba(255,75,43,0.1)',
+                              padding: '2px 8px', borderRadius: 99,
+                            }}>✓ Paid</span>
+                          )}
                           <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
                             {new Date(start.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                           </span>

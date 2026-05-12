@@ -97,8 +97,8 @@ const Login = ({ onLogin }) => {
             color: 'var(--text-dim)',
           }}
         >
-          <p>Client: tres / tres143</p>
-          <p>Pilot: admin / kuchi143</p>
+          <p>Developed By: B I S A C O D E</p>
+
         </div>
       </div>
     </div>
