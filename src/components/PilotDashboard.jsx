@@ -895,7 +895,7 @@ const PilotDashboard = ({ user, onLogout }) => {
                           <div className="quick-stat">
                             <span className="label">Hours Worked</span>
                             <span className="value" style={{ color: 'var(--accent-purple)' }}>
-                              {hrsToday.toFixed(2)} hrs
+                              {(() => { const h = Math.floor(hrsToday); const m = Math.round((hrsToday - h) * 60); return `${h}h ${m}m`; })()}
                             </span>
                           </div>
                           <div className="quick-stat">

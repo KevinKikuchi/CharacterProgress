@@ -599,7 +599,9 @@ const ClientDashboard = ({ user, onLogout }) => {
                         </div>
                         <div className="quick-stat">
                           <span className="label">Hours Worked</span>
-                          <span className="value" style={{ color: 'var(--accent-purple)' }}>{hrsToday.toFixed(2)} hrs</span>
+                          <span className="value" style={{ color: 'var(--accent-purple)' }}>
+                              {hrsToday.toFixed(2)} hrs
+                            </span>
                         </div>
                         <div style={{ borderTop: '1px solid var(--glass-border)', marginTop: 8, paddingTop: 8 }}>
                           <div className="quick-stat">
@@ -927,9 +929,7 @@ const ClientDashboard = ({ user, onLogout }) => {
                                   ⏱ Total: <span style={{ color: 'var(--accent-gold)' }}>
                                     {(() => {
                                       if (end.billed_seconds && end.billed_seconds > 0) {
-                                        const h = Math.floor(end.billed_seconds / 3600);
-                                        const m = Math.floor((end.billed_seconds % 3600) / 60);
-                                        return `${h}h ${m}m`;
+                                        return `${(end.billed_seconds / 3600).toFixed(2)} hrs`;
                                       }
                                       return null;
                                     })()}
