@@ -879,7 +879,8 @@ const ClientDashboard = ({ user, onLogout }) => {
                     const end = endLogs[i];
                     const isLastStart = i === startLogs.length - 1;
                     const sessionIsActive = activeSession?.status === 'active';
-                    if (!end && !(isLastStart && sessionIsActive)) return null;
+                    const timerRunning = activeSession?.timer_status !== 'stopped';
+                    if (!end && !(isLastStart && sessionIsActive && timerRunning)) return null;
                     const expGained = end ? expPercentGained(start.level, parseFloat(start.exp_percent), end.level, parseFloat(end.exp_percent)) : null;
                     return (
                       <div key={start.id} className="glass" style={{ padding: '12px 16px', borderRadius: 'var(--radius-sm)' }}>

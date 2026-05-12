@@ -526,8 +526,8 @@ const PilotDashboard = ({ user, onLogout }) => {
   ) : null;
   const timerActive = selectedSession?.timer_status === 'running';
   const canDeleteSession = selectedSession?.timer_status === 'stopped';
-  const startLogsCount = logs.filter(l => l.log_type === 'start').length;
-  const currentDay = startLogsCount || 1;
+  const endLogsCount = logs.filter(l => l.log_type === 'end').length;
+  const currentDay = endLogsCount + 1;
 
   const getGainColor = (log, prevLog) => {
     if (!prevLog || log.log_type === 'start') return 'var(--text-dim)';
