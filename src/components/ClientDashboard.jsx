@@ -874,16 +874,32 @@ const ClientDashboard = ({ user, onLogout }) => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {(() => {
                   const startLogs = [...logs].filter(l => l.log_type === 'start').sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-                  const endLogs = [...logs].filter(l => l.log_type === 'end').sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+                  const endLogsCopy = [...logs].filter(l => l.log_type === 'end').sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+                  // Get latest update/end logs (any type except start) to use as fallback end data
+                  const allNonStartLogs = [...logs].filter(l => l.log_type !== 'start').sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
                   return startLogs.map((start, i) => {
                     // Find the first end log that occurred after this start log
-                    const end = endLogs.find(e => new Date(e.created_at) > new Date(start.created_at));
+                    const end = endLogsCopy.find(e => new Date(e.created_at) > new Date(start.created_at));
                     // Remove matched end from future matching
-                    if (end) endLogs.splice(endLogs.indexOf(end), 1);
+                    if (end) endLogsCopy.splice(endLogsCopy.indexOf(end), 1);
 
-                    const expGained = end ? expPercentGained(start.level, parseFloat(start.exp_percent), end.level, parseFloat(end.exp_percent)) : null;
-                    const isInProgress = !end;
+                    // If no end log found, check if the session is completed anyway
+                    // (end log insert can fail while session status update succeeds)
+                    const isLastStart = i === startLogs.length - 1;
+                    const sessionCompleted = activeSession.status === 'completed';
+                    const isInProgress = !end && !(isLastStart && sessionCompleted);
+                    const isCompletedNoEnd = !end && isLastStart && sessionCompleted;
+
+                    // For completed sessions without end log, use the latest update log as fallback
+                    const fallbackEnd = isCompletedNoEnd
+                      ? allNonStartLogs.find(l => new Date(l.created_at) > new Date(start.created_at))
+                      : null;
+
+                    const effectiveEnd = end || fallbackEnd;
+                    const expGained = effectiveEnd
+                      ? expPercentGained(start.level, parseFloat(start.exp_percent), effectiveEnd.level, parseFloat(effectiveEnd.exp_percent))
+                      : null;
 
                     return (
                       <div key={start.id} className="glass" style={{ padding: '12px 16px', borderRadius: 'var(--radius-sm)' }}>
@@ -899,6 +915,22 @@ const ClientDashboard = ({ user, onLogout }) => {
                                 background: 'rgba(0,242,255,0.1)',
                                 padding: '2px 8px', borderRadius: 99,
                               }}>● In Progress</span>
+                            )}
+                            {isCompletedNoEnd && (
+                              <span style={{
+                                fontSize: '0.72rem', fontWeight: 700,
+                                color: 'var(--success)',
+                                background: 'rgba(0,255,136,0.08)',
+                                padding: '2px 8px', borderRadius: 99,
+                              }}>✓ Completed</span>
+                            )}
+                            {end && (
+                              <span style={{
+                                fontSize: '0.72rem', fontWeight: 700,
+                                color: 'var(--success)',
+                                background: 'rgba(0,255,136,0.08)',
+                                padding: '2px 8px', borderRadius: 99,
+                              }}>✓ Completed</span>
                             )}
                             {end?.paid_at && (
                               <span style={{
@@ -919,10 +951,10 @@ const ClientDashboard = ({ user, onLogout }) => {
                               <span style={{ color: 'var(--text-dim)' }}>Start Level: </span>
                               <span style={{ color: 'var(--text-muted)' }}>Lv.{start.level} @ {parseFloat(start.exp_percent).toFixed(4)}%</span>
                             </span>
-                            {end && (
+                            {effectiveEnd && (
                               <span style={{ fontSize: '0.85rem' }}>
                                 <span style={{ color: 'var(--text-dim)' }}>End Level: </span>
-                                <span style={{ color: 'var(--text-muted)' }}>Lv.{end.level} @ {parseFloat(end.exp_percent).toFixed(4)}%</span>
+                                <span style={{ color: 'var(--text-muted)' }}>Lv.{effectiveEnd.level} @ {parseFloat(effectiveEnd.exp_percent).toFixed(4)}%</span>
                               </span>
                             )}
                             {expGained !== null && (
@@ -960,6 +992,8 @@ const ClientDashboard = ({ user, onLogout }) => {
                                   </span>
                                 </span>
                               </>
+                            ) : isCompletedNoEnd ? (
+                              <span style={{ fontSize: '0.8rem', color: 'var(--success)', fontWeight: 600 }}>✓ Session completed</span>
                             ) : (
                               <span style={{ fontSize: '0.8rem', color: 'var(--accent-teal)', fontWeight: 600 }}>● Currently active</span>
                             )}
