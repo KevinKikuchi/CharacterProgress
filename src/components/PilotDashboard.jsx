@@ -895,7 +895,7 @@ const PilotDashboard = ({ user, onLogout }) => {
                           <div className="quick-stat">
                             <span className="label">Hours Worked</span>
                             <span className="value" style={{ color: 'var(--accent-purple)' }}>
-                              {(() => { const h = Math.floor(totalSecs / 3600); const m = Math.floor((totalSecs % 3600) / 60); return `${h}.${m.toString().padStart(2, '0')} hrs`; })()}
+                              {(() => { const h = Math.floor(totalSecs / 3600); const m = Math.floor((totalSecs % 3600) / 60); return `${h}h ${m}m`; })()}
                             </span>
                           </div>
                           <div className="quick-stat">
