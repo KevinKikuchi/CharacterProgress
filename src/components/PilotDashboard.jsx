@@ -197,14 +197,11 @@ const PilotDashboard = ({ user, onLogout }) => {
   const handleStart = async () => {
     if (!selectedSessionId) return;
 
-    const sortedLogs = [...logs].sort((a, b) =>
-      new Date(b.created_at) - new Date(a.created_at)
-    );
-    const latestStart = sortedLogs.find(l => l.log_type === 'start');
-    const latestEnd = sortedLogs.find(l => l.log_type === 'end');
+    const recentStart = logs.find(l => l.log_type === 'start');
+    const recentEnd = logs.find(l => l.log_type === 'end');
 
-    const needsStartLog = !latestStart ||
-      (latestEnd && new Date(latestStart.created_at) < new Date(latestEnd.created_at));
+    const needsStartLog = !recentStart ||
+      (recentEnd && new Date(recentStart.created_at) < new Date(recentEnd.created_at));
 
     if (needsStartLog) {
       const lv = parseInt(updateForm.level) || selectedSession.start_level;
