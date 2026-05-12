@@ -920,13 +920,18 @@ const ClientDashboard = ({ user, onLogout }) => {
                               <>
                                 <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
                                   🕐 Time Out: <span style={{ color: 'var(--text-muted)' }}>
-                                    {new Date(end.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                    {new Date(end.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} — {new Date(end.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                                   </span>
                                 </span>
                                 <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
                                   ⏱ Total: <span style={{ color: 'var(--accent-gold)' }}>
                                     {(() => {
-                                        const secs = Math.max(0, Math.floor((new Date(end.created_at) - new Date(start.created_at)) / 1000));
+                                      if (end.billed_seconds && end.billed_seconds > 0) {
+                                        const h = Math.floor(end.billed_seconds / 3600);
+                                        const m = Math.floor((end.billed_seconds % 3600) / 60);
+                                        return `${h}h ${m}m`;
+                                      }
+                                      const secs = Math.max(0, Math.floor((new Date(end.created_at) - new Date(start.created_at)) / 1000));
                                       const h = Math.floor(secs / 3600);
                                       const m = Math.floor((secs % 3600) / 60);
                                       return `${h}h ${m}m`;

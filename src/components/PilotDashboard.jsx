@@ -239,9 +239,10 @@ const PilotDashboard = ({ user, onLogout }) => {
       ? Math.floor((Date.now() - new Date(selectedSession.timer_started_at).getTime()) / 1000)
       : 0;
 
+    const todayBilled = (selectedSession.total_active_seconds || 0) + elapsed;
+
     const newBilled = (selectedSession.total_billed_seconds || 0)
-      + (selectedSession.total_active_seconds || 0)
-      + elapsed;
+      + todayBilled;
 
     await supabase.from('progress_logs').insert({
       session_id: selectedSessionId,
@@ -250,6 +251,7 @@ const PilotDashboard = ({ user, onLogout }) => {
       log_type: 'end',
       notes: stopForm.notes || `Session ended at Lv.${lv} ${exp}%`,
       image_url: stopImageUrlRef.current || null,
+      billed_seconds: todayBilled,
     });
 
     await updateSession(selectedSessionId, {
