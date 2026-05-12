@@ -931,10 +931,7 @@ const ClientDashboard = ({ user, onLogout }) => {
                                         const m = Math.floor((end.billed_seconds % 3600) / 60);
                                         return `${h}h ${m}m`;
                                       }
-                                      const secs = Math.max(0, Math.floor((new Date(end.created_at) - new Date(start.created_at)) / 1000));
-                                      const h = Math.floor(secs / 3600);
-                                      const m = Math.floor((secs % 3600) / 60);
-                                      return `${h}h ${m}m`;
+                                      return null;
                                     })()}
                                   </span>
                                 </span>
