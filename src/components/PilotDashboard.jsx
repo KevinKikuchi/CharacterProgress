@@ -196,16 +196,27 @@ const PilotDashboard = ({ user, onLogout }) => {
 
   const handleStart = async () => {
     if (!selectedSessionId) return;
-    const lv = parseInt(updateForm.level) || selectedSession.start_level;
-    const exp = parseFloat(updateForm.expPercent) || form.startExpPercent;
 
-    await supabase.from('progress_logs').insert({
-      session_id: selectedSessionId,
-      level: lv,
-      exp_percent: exp,
-      log_type: 'start',
-      notes: `Session started at Lv.${lv} ${exp}%`,
-    });
+    const sortedLogs = [...logs].sort((a, b) =>
+      new Date(b.created_at) - new Date(a.created_at)
+    );
+    const latestStart = sortedLogs.find(l => l.log_type === 'start');
+    const latestEnd = sortedLogs.find(l => l.log_type === 'end');
+
+    const needsStartLog = !latestStart ||
+      (latestEnd && new Date(latestStart.created_at) < new Date(latestEnd.created_at));
+
+    if (needsStartLog) {
+      const lv = parseInt(updateForm.level) || selectedSession.start_level;
+      const exp = parseFloat(updateForm.expPercent) || 0;
+      await supabase.from('progress_logs').insert({
+        session_id: selectedSessionId,
+        level: lv,
+        exp_percent: exp,
+        log_type: 'start',
+        notes: `Session started at Lv.${lv} ${exp}%`,
+      });
+    }
 
     await updateSession(selectedSessionId, {
       timer_status: 'running',
