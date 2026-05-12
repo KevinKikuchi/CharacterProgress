@@ -600,7 +600,7 @@ const ClientDashboard = ({ user, onLogout }) => {
                         <div className="quick-stat">
                           <span className="label">Hours Worked</span>
                           <span className="value" style={{ color: 'var(--accent-purple)' }}>
-                              {hrsToday.toFixed(2)} hrs
+                              {(() => { const h = Math.floor(totalSecs / 3600); const m = Math.floor((totalSecs % 3600) / 60); return `${h}.${m.toString().padStart(2, '0')} hrs`; })()}
                             </span>
                         </div>
                         <div style={{ borderTop: '1px solid var(--glass-border)', marginTop: 8, paddingTop: 8 }}>
@@ -611,7 +611,7 @@ const ClientDashboard = ({ user, onLogout }) => {
                             </span>
                           </div>
                           <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', textAlign: 'right', marginTop: 2 }}>
-                            {getCurrencySymbol(activeSession?.currency)}{rate.toFixed(2)} × {hrsToday.toFixed(2)} hrs
+                            {getCurrencySymbol(activeSession?.currency)}{rate.toFixed(2)} × {(() => { const h = Math.floor(totalSecs / 3600); const m = Math.floor((totalSecs % 3600) / 60); return `${h}.${m.toString().padStart(2, '0')} hrs`; })()}
                           </div>
                         </div>
                       </div>
@@ -929,7 +929,10 @@ const ClientDashboard = ({ user, onLogout }) => {
                                   ⏱ Total: <span style={{ color: 'var(--accent-gold)' }}>
                                     {(() => {
                                       if (end.billed_seconds && end.billed_seconds > 0) {
-                                        return `${(end.billed_seconds / 3600).toFixed(2)} hrs`;
+                                        const totalMins = Math.floor(end.billed_seconds / 60);
+                                        const h = Math.floor(totalMins / 60);
+                                        const m = totalMins % 60;
+                                        return `${h}.${m.toString().padStart(2, '0')} hrs`;
                                       }
                                       return null;
                                     })()}
