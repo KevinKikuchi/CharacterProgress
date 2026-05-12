@@ -488,35 +488,18 @@ const PilotDashboard = ({ user, onLogout }) => {
     const exp = parseFloat(continueForm.startExpPercent);
     const target = parseInt(continueForm.targetLevel);
 
-    const { count } = await supabase
-      .from('progress_logs')
-      .select('*', { count: 'exact', head: true })
-      .eq('session_id', selectedSessionId)
-      .eq('log_type', 'start');
-
-    const nextDay = (count || 1) + 1;
-
     await updateSession(selectedSessionId, {
       status: 'active',
       timer_status: 'stopped',
       timer_started_at: null,
       total_active_seconds: 0,
       total_billed_seconds: selectedSession.total_billed_seconds || 0,
-      current_day: nextDay,
-      start_level: lv,
       target_level: target,
+      start_level: lv,
       payment_status: 'unpaid',
       payment_requested: false,
       payment_reference: null,
       payment_method: null,
-    });
-
-    await supabase.from('progress_logs').insert({
-      session_id: selectedSessionId,
-      level: lv,
-      exp_percent: exp,
-      log_type: 'start',
-      notes: `Day ${nextDay} started at Lv.${lv} ${exp}%`,
     });
 
     setTimerDisplay('00:00:00');
@@ -524,7 +507,7 @@ const PilotDashboard = ({ user, onLogout }) => {
     setShowContinueForm(false);
     await loadLogs(selectedSessionId);
     await loadSessions();
-    showNotif(`Day ${nextDay} started!`);
+    showNotif('Ready! Click Start Session to begin working.');
   };
 
   const calcExpGained = () => {
@@ -543,6 +526,8 @@ const PilotDashboard = ({ user, onLogout }) => {
   ) : null;
   const timerActive = selectedSession?.timer_status === 'running';
   const canDeleteSession = selectedSession?.timer_status === 'stopped';
+  const startLogsCount = logs.filter(l => l.log_type === 'start').length;
+  const currentDay = startLogsCount || 1;
 
   const getGainColor = (log, prevLog) => {
     if (!prevLog || log.log_type === 'start') return 'var(--text-dim)';
@@ -649,7 +634,7 @@ const PilotDashboard = ({ user, onLogout }) => {
             <Play size={24} style={{ color: 'var(--accent-teal)', marginBottom: 12 }} />
             <h3>Continue Session</h3>
             <p style={{ color: 'var(--text-muted)', marginBottom: 16, fontSize: '0.9rem' }}>
-              Day {(selectedSession.current_day || 1) + 1} — update starting stats.
+              Day {currentDay + 1} — update starting stats.
             </p>
             <form onSubmit={handleContinueSession} style={{ width: '100%' }}>
               <div className="form-row" style={{ marginBottom: 12 }}>
@@ -676,7 +661,7 @@ const PilotDashboard = ({ user, onLogout }) => {
               </div>
               <div className="dialog-actions">
                 <button type="button" className="btn-secondary" onClick={() => setShowContinueForm(false)}>Cancel</button>
-                <button type="submit" className="btn-primary" disabled={continuing}>{continuing ? 'Starting...' : `Start Day ${(selectedSession.current_day || 1) + 1}`}</button>
+                <button type="submit" className="btn-primary" disabled={continuing}>{continuing ? 'Starting...' : `Start Day ${currentDay + 1}`}</button>
               </div>
             </form>
           </div>
@@ -1023,7 +1008,7 @@ const PilotDashboard = ({ user, onLogout }) => {
                     <div className="session-meta" style={{ marginTop: 4 }}>
                       <span><Target size={12} /> Lv.{selectedSession.start_level} &rarr; Lv.{selectedSession.target_level}</span>
                       <span><span className={`status-indicator ${selectedSession.status}`} />{selectedSession.status}</span>
-                      <span>Day {selectedSession.current_day || 1}</span>
+                      <span>Day {currentDay}</span>
                     </div>
                   </div>
                   <div style={{ textAlign: 'center', minWidth: 120 }}>
@@ -1054,7 +1039,7 @@ const PilotDashboard = ({ user, onLogout }) => {
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center' }}>
                     {selectedSession.timer_status === 'stopped' && selectedSession.status === 'completed' ? (
                       <button className="btn-primary timer-btn start" onClick={openContinueForm}>
-                        <Play size={16} /> Continue Session (Day {(selectedSession.current_day || 1) + 1})
+                        <Play size={16} /> Continue Session (Day {currentDay + 1})
                       </button>
                     ) : selectedSession.timer_status === 'stopped' ? (
                       <button className="btn-primary timer-btn start" onClick={handleStart}>
