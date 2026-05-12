@@ -17,6 +17,7 @@ const PilotDashboard = ({ user, onLogout }) => {
   const [logs, setLogs] = useState([]);
   const [showNewForm, setShowNewForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [continuing, setContinuing] = useState(false);
   const [notification, setNotification] = useState(null);
   const [timerDisplay, setTimerDisplay] = useState('00:00:00');
   const [confirm, setConfirm] = useState(null);
@@ -470,6 +471,8 @@ const PilotDashboard = ({ user, onLogout }) => {
 
   const handleContinueSession = async (e) => {
     e.preventDefault();
+    if (continuing) return;
+    setContinuing(true);
     const lv = parseInt(continueForm.startLevel);
     const exp = parseFloat(continueForm.startExpPercent);
     const target = parseInt(continueForm.targetLevel);
@@ -506,6 +509,7 @@ const PilotDashboard = ({ user, onLogout }) => {
     });
 
     setTimerDisplay('00:00:00');
+    setContinuing(false);
     setShowContinueForm(false);
     await loadLogs(selectedSessionId);
     await loadSessions();
@@ -661,7 +665,7 @@ const PilotDashboard = ({ user, onLogout }) => {
               </div>
               <div className="dialog-actions">
                 <button type="button" className="btn-secondary" onClick={() => setShowContinueForm(false)}>Cancel</button>
-                <button type="submit" className="btn-primary">Start Day {(selectedSession.current_day || 1) + 1}</button>
+                <button type="submit" className="btn-primary" disabled={continuing}>{continuing ? 'Starting...' : `Start Day ${(selectedSession.current_day || 1) + 1}`}</button>
               </div>
             </form>
           </div>
