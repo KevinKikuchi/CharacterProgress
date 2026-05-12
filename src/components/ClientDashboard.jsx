@@ -42,7 +42,7 @@ const ClientDashboard = ({ user, onLogout }) => {
   const displayLevel = latestUpdate?.level ?? startLog?.level ?? activeSession?.start_level ?? 1;
   const rawExp = latestUpdate != null ? parseFloat(latestUpdate.exp_percent)
     : startLog != null ? parseFloat(startLog.exp_percent)
-    : 0;
+      : 0;
   const levelColor = getLevelColor(displayLevel);
 
   useEffect(() => {
@@ -205,16 +205,16 @@ const ClientDashboard = ({ user, onLogout }) => {
 
   const totalExp = startLog && latestUpdate
     ? {
-        raw: expForRange(startLog.level, parseFloat(startLog.exp_percent), latestUpdate.level, parseFloat(latestUpdate.exp_percent)),
-        pct: expPercentGained(startLog.level, parseFloat(startLog.exp_percent), latestUpdate.level, parseFloat(latestUpdate.exp_percent)),
-      }
+      raw: expForRange(startLog.level, parseFloat(startLog.exp_percent), latestUpdate.level, parseFloat(latestUpdate.exp_percent)),
+      pct: expPercentGained(startLog.level, parseFloat(startLog.exp_percent), latestUpdate.level, parseFloat(latestUpdate.exp_percent)),
+    }
     : null;
 
   const elapsedSeconds = activeSession
     ? (activeSession.total_active_seconds || 0) +
-      (activeSession.timer_status === 'running' && activeSession.timer_started_at
-        ? Math.floor((Date.now() - new Date(activeSession.timer_started_at)) / 1000)
-        : 0)
+    (activeSession.timer_status === 'running' && activeSession.timer_started_at
+      ? Math.floor((Date.now() - new Date(activeSession.timer_started_at)) / 1000)
+      : 0)
     : 0;
 
   const calcExpRate = (logs, totalSeconds) => {
@@ -600,18 +600,15 @@ const ClientDashboard = ({ user, onLogout }) => {
                         <div className="quick-stat">
                           <span className="label">Hours Worked</span>
                           <span className="value" style={{ color: 'var(--accent-purple)' }}>
-                              {(() => { const h = Math.floor(totalSecs / 3600); const m = Math.floor((totalSecs % 3600) / 60); return `${h}h ${m}m`; })()}
-                            </span>
+                            {(() => { const h = Math.floor(totalSecs / 3600); const m = Math.floor((totalSecs % 3600) / 60); return `${h}h ${m}m`; })()}
+                          </span>
                         </div>
                         <div style={{ borderTop: '1px solid var(--glass-border)', marginTop: 8, paddingTop: 8 }}>
                           <div className="quick-stat">
-                            <span className="label">Total Due</span>
+                            <span className="label">Total Payment</span>
                             <span className="value" style={{ color: 'var(--accent-gold)', fontSize: '1.3rem', fontWeight: 900 }}>
                               {getCurrencySymbol(activeSession?.currency)}{amountDue.toFixed(2)}
                             </span>
-                          </div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', textAlign: 'right', marginTop: 2 }}>
-                            {getCurrencySymbol(activeSession?.currency)}{rate.toFixed(2)} × {hrsToday.toFixed(2)} hrs
                           </div>
                         </div>
                       </div>
