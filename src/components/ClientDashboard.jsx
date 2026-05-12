@@ -877,10 +877,7 @@ const ClientDashboard = ({ user, onLogout }) => {
                   const endLogs = [...logs].filter(l => l.log_type === 'end').sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
                   return startLogs.map((start, i) => {
                     const end = endLogs[i];
-                    const isLastStart = i === startLogs.length - 1;
-                    const sessionIsActive = activeSession?.status === 'active';
-                    const timerRunning = activeSession?.timer_status !== 'stopped';
-                    if (!end && !(isLastStart && (sessionIsActive || activeSession?.status === 'completed') && timerRunning)) return null;
+                    if (!end) return null;
                     const expGained = end ? expPercentGained(start.level, parseFloat(start.exp_percent), end.level, parseFloat(end.exp_percent)) : null;
                     return (
                       <div key={start.id} className="glass" style={{ padding: '12px 16px', borderRadius: 'var(--radius-sm)' }}>
