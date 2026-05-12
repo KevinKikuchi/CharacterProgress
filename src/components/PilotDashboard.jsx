@@ -27,6 +27,8 @@ const PilotDashboard = ({ user, onLogout }) => {
   });
   const [editingPayment, setEditingPayment] = useState(false);
   const [unpaidSecs, setUnpaidSecs] = useState(0);
+  const [editingTarget, setEditingTarget] = useState(false);
+  const [targetLevelInput, setTargetLevelInput] = useState('');
   const stopImageUrlRef = useRef(null);
   const timerRef = useRef(null);
 
@@ -938,7 +940,52 @@ const PilotDashboard = ({ user, onLogout }) => {
                   <div>
                     <h2 style={{ margin: 0 }}>{selectedSession.character_name}</h2>
                     <div className="session-meta" style={{ marginTop: 4 }}>
-                      <span><Target size={12} /> Lv.{selectedSession.start_level} &rarr; Lv.{selectedSession.target_level}</span>
+                      {editingTarget ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          <Target size={12} /> Lv.{selectedSession.start_level} &rarr; Lv.
+                          <input
+                            className="input-field"
+                            type="number" min={1} max={300}
+                            value={targetLevelInput}
+                            onChange={(e) => setTargetLevelInput(e.target.value)}
+                            onKeyDown={async (e) => {
+                              if (e.key === 'Enter') {
+                                const val = parseInt(targetLevelInput);
+                                if (val > 0) {
+                                  await updateSession(selectedSessionId, { target_level: val });
+                                  await loadSessions();
+                                  showNotif('Target level updated!');
+                                }
+                                setEditingTarget(false);
+                              } else if (e.key === 'Escape') {
+                                setEditingTarget(false);
+                              }
+                            }}
+                            onBlur={async () => {
+                              const val = parseInt(targetLevelInput);
+                              if (val > 0 && val !== selectedSession.target_level) {
+                                await updateSession(selectedSessionId, { target_level: val });
+                                await loadSessions();
+                                showNotif('Target level updated!');
+                              }
+                              setEditingTarget(false);
+                            }}
+                            autoFocus
+                            style={{ width: 50, padding: '2px 6px', fontSize: '0.8rem', display: 'inline-block' }}
+                          />
+                        </span>
+                      ) : (
+                        <span
+                          style={{ cursor: 'pointer' }}
+                          title="Click to edit target level"
+                          onClick={() => {
+                            setTargetLevelInput(selectedSession.target_level);
+                            setEditingTarget(true);
+                          }}
+                        >
+                          <Target size={12} /> Lv.{selectedSession.start_level} &rarr; Lv.{selectedSession.target_level} ✏️
+                        </span>
+                      )}
                       <span><span className={`status-indicator ${selectedSession.status}`} />{selectedSession.status}</span>
                       <span>Day {currentDay}</span>
                     </div>
