@@ -875,10 +875,16 @@ const ClientDashboard = ({ user, onLogout }) => {
                 {(() => {
                   const startLogs = [...logs].filter(l => l.log_type === 'start').sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
                   const endLogs = [...logs].filter(l => l.log_type === 'end').sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
                   return startLogs.map((start, i) => {
-                    const end = endLogs[i];
-                    if (!end) return null;
+                    // Find the first end log that occurred after this start log
+                    const end = endLogs.find(e => new Date(e.created_at) > new Date(start.created_at));
+                    // Remove matched end from future matching
+                    if (end) endLogs.splice(endLogs.indexOf(end), 1);
+
                     const expGained = end ? expPercentGained(start.level, parseFloat(start.exp_percent), end.level, parseFloat(end.exp_percent)) : null;
+                    const isInProgress = !end;
+
                     return (
                       <div key={start.id} className="glass" style={{ padding: '12px 16px', borderRadius: 'var(--radius-sm)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
@@ -886,6 +892,14 @@ const ClientDashboard = ({ user, onLogout }) => {
                             <span style={{ color: 'var(--accent-gold)', fontWeight: 700, fontSize: '0.85rem' }}>
                               Day {i + 1}
                             </span>
+                            {isInProgress && (
+                              <span style={{
+                                fontSize: '0.72rem', fontWeight: 700,
+                                color: 'var(--accent-teal)',
+                                background: 'rgba(0,242,255,0.1)',
+                                padding: '2px 8px', borderRadius: 99,
+                              }}>● In Progress</span>
+                            )}
                             {end?.paid_at && (
                               <span style={{
                                 fontSize: '0.72rem', fontWeight: 700,
@@ -911,7 +925,7 @@ const ClientDashboard = ({ user, onLogout }) => {
                                 <span style={{ color: 'var(--text-muted)' }}>Lv.{end.level} @ {parseFloat(end.exp_percent).toFixed(4)}%</span>
                               </span>
                             )}
-                            {end && (
+                            {expGained !== null && (
                               <span style={{ fontSize: '0.85rem' }}>
                                 <span style={{ color: 'var(--text-dim)' }}>EXP Gained: </span>
                                 <span style={{ color: 'var(--success)' }}>+{expGained.toFixed(4)}%</span>
@@ -941,13 +955,13 @@ const ClientDashboard = ({ user, onLogout }) => {
                                         const m = Math.floor((end.billed_seconds % 3600) / 60);
                                         return `${h}h ${m}m`;
                                       }
-                                      return null;
+                                      return '—';
                                     })()}
                                   </span>
                                 </span>
                               </>
                             ) : (
-                              <span style={{ fontSize: '0.8rem', color: 'var(--accent-teal)' }}>● In progress</span>
+                              <span style={{ fontSize: '0.8rem', color: 'var(--accent-teal)', fontWeight: 600 }}>● Currently active</span>
                             )}
                           </div>
                         </div>
