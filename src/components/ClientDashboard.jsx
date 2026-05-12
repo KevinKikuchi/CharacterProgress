@@ -999,6 +999,8 @@ const ClientDashboard = ({ user, onLogout }) => {
                                   </span>
                                 </span>
                               </>
+                            ) : isDayCompleted ? (
+                              <span style={{ fontSize: '0.8rem', color: 'var(--success)', fontWeight: 600 }}>✓ Completed</span>
                             ) : (
                               <span style={{ fontSize: '0.8rem', color: 'var(--accent-teal)', fontWeight: 600 }}>● Currently active</span>
                             )}
