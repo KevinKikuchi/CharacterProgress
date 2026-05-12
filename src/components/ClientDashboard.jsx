@@ -884,16 +884,22 @@ const ClientDashboard = ({ user, onLogout }) => {
                     // Remove matched end from future matching
                     if (end) endLogsCopy.splice(endLogsCopy.indexOf(end), 1);
 
-                    // If no end log found, check if the session is completed anyway
-                    // (end log insert can fail while session status update succeeds)
                     const isLastStart = i === startLogs.length - 1;
+                    const nextStart = startLogs[i + 1] || null;
                     const sessionCompleted = activeSession.status === 'completed';
-                    const isInProgress = !end && !(isLastStart && sessionCompleted);
-                    const isCompletedNoEnd = !end && isLastStart && sessionCompleted;
 
-                    // For completed sessions without end log, use the latest update log as fallback
-                    const fallbackEnd = isCompletedNoEnd
-                      ? allNonStartLogs.find(l => new Date(l.created_at) > new Date(start.created_at))
+                    // A day is completed if:
+                    // 1. It has a matching end log, OR
+                    // 2. A subsequent start log exists (Day N+1 started = Day N is done), OR
+                    // 3. It's the last start and the session status is 'completed'
+                    const isDayCompleted = !!end || !!nextStart || (isLastStart && sessionCompleted);
+                    const isInProgress = !isDayCompleted;
+
+                    // For days without an end log, use fallback data:
+                    // - If next start exists, use the next start log (that's where the new day began)
+                    // - Otherwise use the latest non-start log after this start
+                    const fallbackEnd = !end && isDayCompleted
+                      ? (nextStart || allNonStartLogs.find(l => new Date(l.created_at) > new Date(start.created_at)))
                       : null;
 
                     const effectiveEnd = end || fallbackEnd;
@@ -916,15 +922,7 @@ const ClientDashboard = ({ user, onLogout }) => {
                                 padding: '2px 8px', borderRadius: 99,
                               }}>● In Progress</span>
                             )}
-                            {isCompletedNoEnd && (
-                              <span style={{
-                                fontSize: '0.72rem', fontWeight: 700,
-                                color: 'var(--success)',
-                                background: 'rgba(0,255,136,0.08)',
-                                padding: '2px 8px', borderRadius: 99,
-                              }}>✓ Completed</span>
-                            )}
-                            {end && (
+                            {isDayCompleted && (
                               <span style={{
                                 fontSize: '0.72rem', fontWeight: 700,
                                 color: 'var(--success)',
@@ -992,7 +990,7 @@ const ClientDashboard = ({ user, onLogout }) => {
                                   </span>
                                 </span>
                               </>
-                            ) : isCompletedNoEnd ? (
+                            ) : isDayCompleted ? (
                               <span style={{ fontSize: '0.8rem', color: 'var(--success)', fontWeight: 600 }}>✓ Session completed</span>
                             ) : (
                               <span style={{ fontSize: '0.8rem', color: 'var(--accent-teal)', fontWeight: 600 }}>● Currently active</span>
