@@ -125,6 +125,7 @@ const ClientDashboard = ({ user, onLogout }) => {
 
     const pollInterval = setInterval(() => {
       loadSessions();
+      loadLogs(activeSession.id);
       loadPaymentHistory(activeSession.id);
     }, 3000);
 

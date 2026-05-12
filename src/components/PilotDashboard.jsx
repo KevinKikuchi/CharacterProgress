@@ -261,7 +261,7 @@ const PilotDashboard = ({ user, onLogout }) => {
     if (!selectedSessionId || !selectedSession) return;
 
     const lv = parseInt(stopForm.level);
-    const exp = parseFloat(stopForm.expPercent);
+    const exp = parseFloat(stopForm.expPercent) || 0;
     if (!lv) {
       showNotif('Please enter the final level', 'error');
       return;
@@ -970,7 +970,7 @@ const PilotDashboard = ({ user, onLogout }) => {
                 <div className="timer-controls glass card" style={{ marginBottom: 24 }}>
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center' }}>
                     <button className="btn-primary timer-btn start" onClick={handleStart}>
-                      <Play size={16} /> Start Session {currentDay > 0 ? `(Day ${currentDay + 1})` : ''}
+                      <Play size={16} /> Start Session
                     </button>
                   </div>
                 </div>
