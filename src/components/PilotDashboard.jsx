@@ -217,12 +217,11 @@ const PilotDashboard = ({ user, onLogout }) => {
       });
     }
 
-    // If session was completed, reset it to active with fresh timer
     const sessionUpdates = {
       timer_status: 'running',
       timer_started_at: new Date().toISOString(),
     };
-    if (isCompleted) {
+    if (isCompleted || needsStartLog) {
       sessionUpdates.status = 'active';
       sessionUpdates.total_active_seconds = 0;
     }

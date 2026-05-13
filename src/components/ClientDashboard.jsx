@@ -1078,7 +1078,18 @@ const ClientDashboard = ({ user, onLogout }) => {
                             ) : isDayCompleted ? (
                               <span style={{ fontSize: '0.8rem', color: 'var(--success)', fontWeight: 600 }}>✓ Completed</span>
                             ) : (
-                              <span style={{ fontSize: '0.8rem', color: 'var(--accent-teal)', fontWeight: 600 }}>● Currently active</span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                                <span style={{ 
+                                  fontSize: '0.8rem', 
+                                  color: activeSession.timer_status === 'paused' ? 'var(--accent-gold)' : 'var(--accent-teal)', 
+                                  fontWeight: 600 
+                                }}>
+                                  {activeSession.timer_status === 'paused' ? '● Paused' : '● Currently active'}
+                                </span>
+                                <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
+                                  ⏱ Active Time: <span style={{ color: 'var(--text-muted)' }}>{timerDisplay}</span>
+                                </span>
+                              </div>
                             )}
                           </div>
                         </div>
