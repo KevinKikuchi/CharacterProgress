@@ -851,9 +851,9 @@ const ClientDashboard = ({ user, onLogout }) => {
                   <Line
                     type="monotone"
                     dataKey="pct"
-                    stroke="var(--accent-teal)"
+                    stroke="var(--danger)"
                     strokeWidth={2}
-                    dot={{ fill: 'var(--accent-teal)', r: 4 }}
+                    dot={{ fill: 'var(--danger)', r: 4 }}
                     activeDot={{ r: 6, fill: 'var(--accent-gold)' }}
                   />
                 </LineChart>
@@ -913,7 +913,7 @@ const ClientDashboard = ({ user, onLogout }) => {
                   {isSelectionMode && (
                     <div style={{ 
                       position: 'absolute', top: 8, left: 8, zIndex: 10,
-                      background: selectedLogs.includes(log.id) ? 'var(--accent-teal)' : 'rgba(0,0,0,0.5)',
+                      background: selectedLogs.includes(log.id) ? 'var(--danger)' : 'rgba(0,0,0,0.5)',
                       width: 20, height: 20, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center',
                       border: '1px solid rgba(255,255,255,0.2)'
                     }}>
@@ -1111,7 +1111,7 @@ const ClientDashboard = ({ user, onLogout }) => {
           animation: levelUpFlash 2s ease-in-out;
         }
         .proof-item.selected {
-          outline: 2px solid var(--accent-teal);
+          outline: 2px solid var(--danger);
           outline-offset: -2px;
         }
         .proof-item.selected img {
