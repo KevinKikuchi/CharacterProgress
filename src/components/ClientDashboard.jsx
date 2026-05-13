@@ -851,9 +851,9 @@ const ClientDashboard = ({ user, onLogout }) => {
                   <Line
                     type="monotone"
                     dataKey="pct"
-                    stroke="var(--danger)"
+                    stroke="#03f4fc"
                     strokeWidth={2}
-                    dot={{ fill: 'var(--danger)', r: 4 }}
+                    dot={{ fill: '#03f4fc', r: 4 }}
                     activeDot={{ r: 6, fill: 'var(--accent-gold)' }}
                   />
                 </LineChart>
